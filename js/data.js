@@ -1,227 +1,58 @@
-const DISTRICTS = [
-  { id: 'center', name: 'Centre-ville', traffic: 1.4, rentMult: 1.6, clientele: 'Touristes & CSP+', desc: 'Fort trafic, loyer élevé' },
-  { id: 'commercial', name: 'Zone commerciale', traffic: 1.15, rentMult: 1.1, clientele: 'Familles', desc: 'Bon flux, concurrence dense' },
-  { id: 'residential', name: 'Quartier résidentiel', traffic: 0.8, rentMult: 0.7, clientele: 'Locaux fidèles', desc: 'Clientèle régulière, faible trafic' },
-  { id: 'industrial', name: 'Zone industrielle', traffic: 0.55, rentMult: 0.45, clientele: 'B2B & ouvriers', desc: 'Idéal production, peu de passage' },
-  { id: 'trendy', name: 'Quartier tendance', traffic: 1.1, rentMult: 1.35, clientele: 'Jeunes & branchés', desc: 'Volatile mais porteur' },
-];
+const GAME_CONFIG = {
+  dayDuration: 20000,
+  openHour: 9,
+  closeHour: 19,
+  tickInterval: 500,
+};
 
-const BUSINESS_TYPES = [
-  {
-    id: 'salon',
-    name: 'Salon de coiffure',
-    icon: '✂️',
-    sector: 'services',
-    desc: 'Clientèle régulière et fidèle. Idéal pour commencer.',
-    openCost: 3000,
-    weeklyRent: 400,
-    revenuePerCustomer: 35,
-    baseCustomersPerWeek: 40,
-    staffNeeded: 2,
-    stocks: [
-      { id: 'shampoing', name: 'Shampoings & soins', unit: 'flacons', weeklyUse: 20, orderSize: 50, baseCost: 80 },
-      { id: 'coloration', name: 'Colorations', unit: 'tubes', weeklyUse: 10, orderSize: 30, baseCost: 120 },
-      { id: 'materiel', name: 'Matériel jetable', unit: 'lots', weeklyUse: 5, orderSize: 20, baseCost: 45 },
-    ],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'cabin', name: 'Cabine VIP', cost: 2000, effect: 'revenuePerCustomer', value: 15, desc: '+15€ par client (service premium)' },
-      { id: 'online', name: 'Réservation en ligne', cost: 800, effect: 'customers', value: 10, desc: '+10 clients/semaine' },
-      { id: 'formation', name: 'Formation équipe', cost: 1200, effect: 'satisfaction', value: 0.1, desc: 'Réduit le turnover employés' },
-    ],
-  },
-  {
-    id: 'bar',
-    name: 'Bar',
-    icon: '🍺',
-    sector: 'food',
-    desc: 'Soirées animées. Revenus variables, gestion des stocks critique.',
-    openCost: 4500,
-    weeklyRent: 600,
-    revenuePerCustomer: 28,
-    baseCustomersPerWeek: 60,
-    staffNeeded: 3,
-    stocks: [
-      { id: 'biere', name: 'Bières pression', unit: 'fûts', weeklyUse: 8, orderSize: 20, baseCost: 180 },
-      { id: 'vin', name: 'Vins & cocktails', unit: 'bouteilles', weeklyUse: 15, orderSize: 40, baseCost: 220 },
-      { id: 'softs', name: 'Softs & jus', unit: 'caisses', weeklyUse: 6, orderSize: 20, baseCost: 60 },
-      { id: 'snacks', name: 'Snacks & tapas', unit: 'lots', weeklyUse: 10, orderSize: 30, baseCost: 90 },
-    ],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'terrasse', name: 'Terrasse', cost: 3000, effect: 'customers', value: 20, desc: '+20 clients/semaine (météo dépendant)' },
-      { id: 'musique', name: 'Scène live', cost: 2000, effect: 'revenuePerCustomer', value: 8, desc: '+8€ par client le week-end' },
-      { id: 'cave', name: 'Cave à vins', cost: 1500, effect: 'revenuePerCustomer', value: 5, desc: '+5€ par client, carte élargie' },
-    ],
-  },
-  {
-    id: 'florist',
-    name: 'Fleuriste',
-    icon: '🌸',
-    sector: 'services',
-    desc: 'Saisonnalité forte. Stocks périssables à gérer avec soin.',
-    openCost: 2500,
-    weeklyRent: 350,
-    revenuePerCustomer: 42,
-    baseCustomersPerWeek: 25,
-    staffNeeded: 1,
-    stocks: [
-      { id: 'roses', name: 'Roses', unit: 'tiges', weeklyUse: 80, orderSize: 200, baseCost: 60 },
-      { id: 'bouquets', name: 'Compositions & bouquets', unit: 'unités', weeklyUse: 15, orderSize: 40, baseCost: 95 },
-      { id: 'plantes', name: 'Plantes vertes', unit: 'pots', weeklyUse: 8, orderSize: 25, baseCost: 70 },
-    ],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'livraison', name: 'Service livraison', cost: 1500, effect: 'customers', value: 15, desc: '+15 clients/semaine (commandes en ligne)' },
-      { id: 'atelier', name: 'Atelier art floral', cost: 2000, effect: 'revenuePerCustomer', value: 20, desc: '+20€ par client (cours & créations)' },
-    ],
-  },
-  {
-    id: 'resto',
-    name: 'Restaurant',
-    icon: '🍽️',
-    sector: 'food',
-    desc: 'Marges solides mais gestion lourde. Personnel et stocks critiques.',
-    openCost: 8000,
-    weeklyRent: 900,
-    revenuePerCustomer: 45,
-    baseCustomersPerWeek: 70,
-    staffNeeded: 5,
-    stocks: [
-      { id: 'viande', name: 'Viandes & poissons', unit: 'kg', weeklyUse: 30, orderSize: 80, baseCost: 350 },
-      { id: 'legumes', name: 'Légumes & fruits', unit: 'kg', weeklyUse: 40, orderSize: 100, baseCost: 120 },
-      { id: 'boissons', name: 'Boissons & vins', unit: 'bouteilles', weeklyUse: 20, orderSize: 60, baseCost: 200 },
-      { id: 'epicerie', name: 'Épicerie & condiments', unit: 'lots', weeklyUse: 8, orderSize: 25, baseCost: 80 },
-    ],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'chef', name: 'Chef étoilé', cost: 5000, effect: 'revenuePerCustomer', value: 25, desc: '+25€ par couvert, réputation +' },
-      { id: 'terrasse', name: 'Terrasse', cost: 4000, effect: 'customers', value: 25, desc: '+25 couverts/semaine' },
-      { id: 'bio', name: 'Carte bio & locale', cost: 2000, effect: 'revenuePerCustomer', value: 10, desc: '+10€ par couvert, fidélisation' },
-    ],
-  },
-  {
-    id: 'fashion',
-    name: 'Boutique mode',
-    icon: '👗',
-    sector: 'retail',
-    desc: 'Collections saisonnières. L\'emplacement est déterminant.',
-    openCost: 5000,
-    weeklyRent: 700,
-    revenuePerCustomer: 65,
-    baseCustomersPerWeek: 30,
-    staffNeeded: 2,
-    stocks: [
-      { id: 'vetements', name: 'Vêtements', unit: 'pièces', weeklyUse: 20, orderSize: 80, baseCost: 600 },
-      { id: 'accessoires', name: 'Accessoires', unit: 'pièces', weeklyUse: 15, orderSize: 60, baseCost: 200 },
-      { id: 'packaging', name: 'Emballages premium', unit: 'lots', weeklyUse: 5, orderSize: 20, baseCost: 40 },
-    ],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'vitrine', name: 'Vitrine digitale', cost: 2500, effect: 'customers', value: 12, desc: '+12 clients/semaine' },
-      { id: 'fidelite', name: 'Programme fidélité', cost: 1000, effect: 'revenuePerCustomer', value: 10, desc: '+10€ par client fidèle' },
-    ],
-  },
-  {
-    id: 'gym',
-    name: 'Salle de sport',
-    icon: '🏋️',
-    sector: 'services',
-    desc: 'Abonnements récurrents. Investissement lourd, revenus stables.',
-    openCost: 12000,
-    weeklyRent: 1100,
-    revenuePerCustomer: 20,
-    baseCustomersPerWeek: 120,
-    staffNeeded: 4,
-    stocks: [
-      { id: 'equip', name: 'Équipements & machines', unit: 'unités', weeklyUse: 0.5, orderSize: 5, baseCost: 1500 },
-      { id: 'hygiene', name: 'Produits hygiène', unit: 'lots', weeklyUse: 10, orderSize: 40, baseCost: 80 },
-      { id: 'compl', name: 'Compléments alimentaires', unit: 'boîtes', weeklyUse: 8, orderSize: 30, baseCost: 60 },
-    ],
-    canDuplicate: false,
-    upgrades: [
-      { id: 'sauna', name: 'Sauna & spa', cost: 8000, effect: 'revenuePerCustomer', value: 8, desc: '+8€/membre/semaine' },
-      { id: 'coach', name: 'Coachs certifiés', cost: 3000, effect: 'customers', value: 30, desc: '+30 membres' },
-    ],
-  },
-  {
-    id: 'studio',
-    name: 'Studio locatif',
-    icon: '🏠',
-    sector: 'real-estate',
-    desc: 'Revenu passif. Zéro stock, gestion minimale.',
-    openCost: 15000,
-    weeklyRent: 0,
-    revenuePerCustomer: 0,
-    baseCustomersPerWeek: 0,
-    weeklyRevenue: 550,
-    staffNeeded: 0,
-    stocks: [],
-    canDuplicate: true,
-    upgrades: [
-      { id: 'renov', name: 'Rénovation complète', cost: 5000, effect: 'weeklyRevenue', value: 150, desc: '+150€/semaine de loyer' },
-      { id: 'meuble', name: 'Meublé premium', cost: 2000, effect: 'weeklyRevenue', value: 80, desc: '+80€/semaine' },
-    ],
-  },
-];
-
-const SUPPLIERS = {
-  salon: [
-    { id: 'sup_salon_1', name: 'L\'Oréal Pro', quality: 1.2, priceMult: 1.3, reliability: 0.95, minOrder: 3, desc: 'Marque premium, livraison fiable' },
-    { id: 'sup_salon_2', name: 'Grossiste Beauté Plus', quality: 1.0, priceMult: 1.0, reliability: 0.85, minOrder: 1, desc: 'Standard, bon rapport qualité-prix' },
-    { id: 'sup_salon_3', name: 'Import Discount', quality: 0.75, priceMult: 0.65, reliability: 0.7, minOrder: 1, desc: 'Moins cher, qualité variable' },
+const SALON = {
+  id: 'salon',
+  name: 'Salon de coiffure',
+  openCost: 3000,
+  weeklyRent: 400,
+  baseCustomersPerDay: 20,
+  revenuePerCustomer: 35,
+  staffSlots: 3,
+  stocks: [
+    { id: 'shampoing', name: 'Shampoings & soins', unit: 'flacons', capacity: 60, dailyUse: 6, orderSize: 30, baseCost: 90 },
+    { id: 'coloration', name: 'Colorations', unit: 'tubes', capacity: 40, dailyUse: 3, orderSize: 20, baseCost: 130 },
+    { id: 'materiel', name: 'Matériel jetable', unit: 'lots', capacity: 30, dailyUse: 2, orderSize: 15, baseCost: 50 },
   ],
-  bar: [
-    { id: 'sup_bar_1', name: 'Cave Prestige', quality: 1.3, priceMult: 1.5, reliability: 0.9, minOrder: 2, desc: 'Sélection haut de gamme' },
-    { id: 'sup_bar_2', name: 'Grossiste Boissons SA', quality: 1.0, priceMult: 1.0, reliability: 0.9, minOrder: 1, desc: 'Standard, livraison hebdo' },
-    { id: 'sup_bar_3', name: 'Discount Drinks', quality: 0.7, priceMult: 0.6, reliability: 0.65, minOrder: 1, desc: 'Bas prix, ruptures fréquentes' },
-  ],
-  florist: [
-    { id: 'sup_flo_1', name: 'Fleurs d\'Holland', quality: 1.35, priceMult: 1.5, reliability: 0.92, minOrder: 2, desc: 'Qualité exceptionnelle, import direct' },
-    { id: 'sup_flo_2', name: 'Marché de Rungis', quality: 1.0, priceMult: 1.0, reliability: 0.88, minOrder: 1, desc: 'Standard, frais du marché' },
-    { id: 'sup_flo_3', name: 'Jardin Local', quality: 0.8, priceMult: 0.75, reliability: 0.8, minOrder: 1, desc: 'Local et moins cher, stock limité' },
-  ],
-  food: [
-    { id: 'sup_food_1', name: 'Producteurs Bio', quality: 1.25, priceMult: 1.45, reliability: 0.85, minOrder: 2, desc: 'Bio & local, clientèle sensible' },
-    { id: 'sup_food_2', name: 'Metro Cash & Carry', quality: 1.0, priceMult: 1.0, reliability: 0.95, minOrder: 1, desc: 'Fiable, large gamme' },
-    { id: 'sup_food_3', name: 'Grossiste Discount', quality: 0.65, priceMult: 0.7, reliability: 0.75, minOrder: 1, desc: 'Économique, qualité irrégulière' },
-  ],
-  retail: [
-    { id: 'sup_ret_1', name: 'Showroom Paris', quality: 1.3, priceMult: 1.4, reliability: 0.9, minOrder: 3, desc: 'Collections exclusives' },
-    { id: 'sup_ret_2', name: 'Grossiste Mode', quality: 1.0, priceMult: 1.0, reliability: 0.88, minOrder: 1, desc: 'Bon compromis prix/qualité' },
-    { id: 'sup_ret_3', name: 'Import Asie', quality: 0.7, priceMult: 0.55, reliability: 0.72, minOrder: 1, desc: 'Très bas prix, délais variables' },
-  ],
-  services: [
-    { id: 'sup_svc_1', name: 'Fournisseur Premium', quality: 1.2, priceMult: 1.35, reliability: 0.93, minOrder: 2, desc: 'Qualité constante' },
-    { id: 'sup_svc_2', name: 'Standard Pro', quality: 1.0, priceMult: 1.0, reliability: 0.87, minOrder: 1, desc: 'Polyvalent et fiable' },
+  upgrades: [
+    { id: 'cabin', name: 'Cabine VIP', cost: 2000, desc: '+12 € par client', effect: 'revenuePerCustomer', value: 12 },
+    { id: 'online', name: 'Réservation en ligne', cost: 800, desc: '+5 clients par jour', effect: 'customersPerDay', value: 5 },
+    { id: 'formation', name: 'Formation équipe', cost: 1200, desc: 'Réduit les démissions', effect: 'retention' },
+    { id: 'vitrine', name: 'Vitrine modernisée', cost: 600, desc: '+3 clients par jour', effect: 'customersPerDay', value: 3 },
   ],
 };
 
+const DISTRICTS = [
+  { id: 'center', name: 'Centre-ville', traffic: 1.4, rentMult: 1.6, desc: 'Fort trafic, loyer élevé' },
+  { id: 'commercial', name: 'Zone commerciale', traffic: 1.15, rentMult: 1.1, desc: 'Bon flux, concurrence dense' },
+  { id: 'residential', name: 'Quartier résidentiel', traffic: 0.8, rentMult: 0.7, desc: 'Clientèle fidèle, faible trafic' },
+  { id: 'trendy', name: 'Quartier tendance', traffic: 1.1, rentMult: 1.35, desc: 'Volatile mais porteur' },
+];
+
+const SUPPLIERS = [
+  { id: 'sup1', name: 'L\'Oréal Pro', quality: 1.2, priceMult: 1.35, reliability: 0.97, desc: 'Premium, très fiable' },
+  { id: 'sup2', name: 'Beauté Grossiste', quality: 1.0, priceMult: 1.0, reliability: 0.88, desc: 'Standard, bon rapport qualité-prix' },
+  { id: 'sup3', name: 'Import Discount', quality: 0.7, priceMult: 0.6, reliability: 0.65, desc: 'Moins cher, livraisons incertaines' },
+];
+
 const STAFF_ROLES = [
-  { id: 'cashier', name: 'Caissier', weeklySalary: 180, effect: 'reduces_manager_time', sectors: ['retail', 'food', 'services'] },
-  { id: 'seller', name: 'Vendeur', weeklySalary: 220, effect: 'customers', value: 8, sectors: ['retail', 'services'] },
-  { id: 'cook', name: 'Cuisinier', weeklySalary: 300, effect: 'revenuePerCustomer', value: 10, sectors: ['food'] },
-  { id: 'manager', name: 'Gérant', weeklySalary: 450, effect: 'autonomy', sectors: ['food', 'retail', 'services'] },
-  { id: 'cleaner', name: 'Agent d\'entretien', weeklySalary: 150, effect: 'satisfaction', value: 0.05, sectors: ['food', 'services', 'real-estate'] },
-  { id: 'accountant', name: 'Comptable', weeklySalary: 280, effect: 'reduces_overhead', value: 0.05, sectors: ['food', 'retail', 'services', 'real-estate'] },
+  { id: 'coiffeur', name: 'Coiffeur', salary: 220, effect: 'customers', value: 6, desc: '+6 clients/jour' },
+  { id: 'senior', name: 'Coiffeur senior', salary: 320, effect: 'revenue', value: 8, desc: '+8 € par client' },
+  { id: 'gerant', name: 'Gérant', salary: 450, effect: 'autonomy', desc: 'Gère les stocks automatiquement' },
+  { id: 'apprenti', name: 'Apprenti', salary: 120, effect: 'customers', value: 3, desc: '+3 clients/jour, nécessite supervision' },
 ];
 
 const RANDOM_EVENTS = [
-  { id: 'ev1', type: 'good', title: 'Bouche à oreille', desc: 'Un client influent a recommandé votre établissement. +20% clients cette semaine.', effect: { type: 'customers_bonus', value: 0.2, duration: 1 } },
-  { id: 'ev2', type: 'good', title: 'Article de presse', desc: 'Un journaliste local a fait un papier sur vous. +30% clients pendant 2 semaines.', effect: { type: 'customers_bonus', value: 0.3, duration: 2 } },
-  { id: 'ev3', type: 'good', title: 'Fête locale', desc: 'Un événement dans le quartier amène du monde. Revenus x1.5 cette semaine.', effect: { type: 'revenue_bonus', value: 0.5, duration: 1 } },
-  { id: 'ev4', type: 'bad', title: 'Inspection sanitaire', desc: 'Contrôle inattendu. Amende de 500 € à régler.', effect: { type: 'cash_penalty', value: 500 } },
-  { id: 'ev5', type: 'bad', title: 'Fuite d\'eau', desc: 'Dégât des eaux dans votre établissement. Réparation : 350 €.', effect: { type: 'cash_penalty', value: 350 } },
-  { id: 'ev6', type: 'bad', title: 'Employé absent', desc: 'Un employé est en arrêt maladie pour 2 semaines. Performance réduite.', effect: { type: 'staff_absent', duration: 2 } },
-  { id: 'ev7', type: 'bad', title: 'Concurrent agressif', desc: 'Un nouveau concurrent s\'installe dans votre quartier. -15% clients pendant 3 semaines.', effect: { type: 'customers_bonus', value: -0.15, duration: 3 } },
-  { id: 'ev8', type: 'bad', title: 'Rupture fournisseur', desc: 'Votre fournisseur ne peut pas livrer cette semaine.', effect: { type: 'supplier_fail', duration: 1 } },
-  { id: 'ev9', type: 'neutral', title: 'Hausse des loyers', desc: 'Le propriétaire augmente le loyer de 10% à partir du mois prochain.', effect: { type: 'rent_increase', value: 0.1 } },
-  { id: 'ev10', type: 'neutral', title: 'Opportunité locale', desc: 'Un local se libère dans votre quartier à prix réduit. À surveiller.', effect: { type: 'info' } },
-];
-
-const SEASONS = [
-  { id: 'spring', name: 'Printemps', multipliers: { florist: 1.3, bar: 1.1, salon: 1.0, resto: 1.05, fashion: 1.2, gym: 0.9, studio: 1.0 } },
-  { id: 'summer', name: 'Été', multipliers: { florist: 0.8, bar: 1.4, salon: 1.1, resto: 1.2, fashion: 1.3, gym: 0.7, studio: 1.0 } },
-  { id: 'autumn', name: 'Automne', multipliers: { florist: 0.9, bar: 1.0, salon: 1.0, resto: 1.0, fashion: 1.1, gym: 1.1, studio: 1.0 } },
-  { id: 'winter', name: 'Hiver', multipliers: { florist: 1.4, bar: 0.9, salon: 0.95, resto: 1.1, fashion: 0.9, gym: 1.3, studio: 1.0 } },
+  { id: 'ev1', type: 'good', title: 'Bouche à oreille', desc: 'Un client influent vous recommande. +5 clients aujourd\'hui.', effect: { type: 'customers_today', value: 5 } },
+  { id: 'ev2', type: 'good', title: 'Article local', desc: 'Le journal du quartier parle de vous. +8 clients aujourd\'hui.', effect: { type: 'customers_today', value: 8 } },
+  { id: 'ev3', type: 'bad', title: 'Employé absent', desc: 'Un employé est malade aujourd\'hui.', effect: { type: 'staff_absent' } },
+  { id: 'ev4', type: 'bad', title: 'Fuite d\'eau', desc: 'Dégât mineur. Réparation : 200 €.', effect: { type: 'cash_penalty', value: 200 } },
+  { id: 'ev5', type: 'bad', title: 'Rupture fournisseur', desc: 'Votre fournisseur ne livre pas aujourd\'hui.', effect: { type: 'supplier_fail' } },
+  { id: 'ev6', type: 'neutral', title: 'Inspection', desc: 'Contrôle d\'hygiène. Tout est en ordre.', effect: { type: 'none' } },
+  { id: 'ev7', type: 'bad', title: 'Mauvais avis en ligne', desc: 'Un avis négatif. -3 clients pendant 3 jours.', effect: { type: 'customers_penalty', value: 3, duration: 3 } },
+  { id: 'ev8', type: 'good', title: 'Fête de quartier', desc: 'Fort passage aujourd\'hui. +10 clients.', effect: { type: 'customers_today', value: 10 } },
 ];
