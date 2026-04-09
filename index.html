@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empire</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="header">
+      <div class="header-left">
+        <h1>Empire</h1>
+        <div class="header-meta">
+          <span id="hdr-week">Semaine 1</span>
+          &nbsp;·&nbsp;
+          <span id="hdr-season">—</span>
+          &nbsp;·&nbsp;
+          <a href="index.html" style="color:var(--text-muted);">Menu</a>
+        </div>
+      </div>
+      <div class="header-right">
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--text-muted);">Trésorerie</div>
+          <div class="header-cash" id="hdr-cash">—</div>
+        </div>
+        <button class="btn-next-week" id="btn-next-week" onclick="nextWeek()">
+          Semaine suivante →
+        </button>
+      </div>
+    </header>
+
+    <div class="kpi-bar">
+      <div class="kpi-item">
+        <div class="kpi-lbl">Revenus / sem.</div>
+        <div class="kpi-val positive" id="kpi-rev">—</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-lbl">Charges / sem.</div>
+        <div class="kpi-val negative" id="kpi-exp">—</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-lbl">Cash-flow net</div>
+        <div class="kpi-val" id="kpi-cf">—</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-lbl">Établissements</div>
+        <div class="kpi-val" id="kpi-biz">0</div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="empire" onclick="UI.switchTab('empire')">Mon empire</button>
+      <button class="tab" data-tab="market" onclick="UI.switchTab('market')">Marché</button>
+      <button class="tab" data-tab="staff" onclick="UI.switchTab('staff')">Personnel</button>
+      <button class="tab" data-tab="dashboard" onclick="UI.switchTab('dashboard')">Dashboard</button>
+      <button class="tab" data-tab="log" onclick="UI.switchTab('log')">Journal</button>
+    </nav>
+
+    <main class="main" id="tab-content"></main>
+
+  </div>
+
+  <div id="modal-overlay"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let gameState = DB.load();
+
+    if (!gameState) {
+      gameState = Engine.initNewGame();
+      DB.addLog(gameState, 'neutral', 'Partie démarrée. Vous disposez de 10 000 € pour bâtir votre empire.');
+      DB.save(gameState);
+    }
+
+    UI.init(gameState);
+
+    function nextWeek() {
+      UI.nextWeek();
+    }
+  </script>
+</body>
+</html>
